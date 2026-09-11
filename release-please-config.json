@@ -5,7 +5,9 @@
       "release-type": "python",
       "package-name": "loomground-lock",
       "changelog-path": "CHANGELOG.md",
-      "version-file": "src/loomground_lock/_version.py"
+      "extra-files": [
+        "src/loomground_lock/_version.py"
+      ]
     }
   }
 }
