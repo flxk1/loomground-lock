@@ -15,6 +15,7 @@ from . import (
     lock_classify,
     seal,
     seal_binding,
+    tier_c_default,
     tier_m,
     verdicts,
 )
@@ -49,6 +50,7 @@ from .oversight import (
 )
 from .scanned_response import LockAudit, ScannedResponse, assert_scanned
 from .seal import SealError, decrypt_record, encrypt_record, is_sealed, seal_folder, unseal_folder
+from .tier_c_default import tier_c_default_check
 from .verdicts import verdict_for_action, verdict_for_oversight
 
 __all__ = [
@@ -56,7 +58,7 @@ __all__ = [
     "AuditLog", "CapabilityToken", "EgressDecision", "Finding", "IngressDecision",
     "Mode", "RemediationAction", "TextDecision", "ToolCall", "ToolResponse",
     "egress", "ingress", "lock_text", "redact_for_capture", "tier_b_scan_text",
-    "tier_c_context_terms_check", "validate_token",
+    "tier_c_context_terms_check", "tier_c_default_check", "validate_token",
     "describe", "is_valid_ref", "resolve_secret",
     "DecisionsStore", "StoredDecision",
     "scan_document", "scan_text",
@@ -66,5 +68,5 @@ __all__ = [
     "SealError", "decrypt_record", "encrypt_record", "is_sealed", "seal_folder", "unseal_folder",
     "verdict_for_action", "verdict_for_oversight",
     "credential_resolver", "host_deps", "injection_scan", "lock_classify",
-    "seal", "seal_binding", "tier_m", "verdicts",
+    "seal", "seal_binding", "tier_c_default", "tier_m", "verdicts",
 ]

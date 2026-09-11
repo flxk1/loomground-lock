@@ -31,6 +31,8 @@ seal_folder("~/Workspaces/alpha", passphrase="…")           # ciphertext at re
 ```
 in : lock_text("mail alex@example.com the project atlas plan", context="- project atlas")
 out: refuse ['B', 'C'] high-severity finding (PII regex match, confidential term, or special-category)
+in : lock_text("chemo starts Monday")            # nothing wired — the built-in Tier C
+out: refuse ['C'] high-severity finding (PII regex match, confidential term, or special-category)
 in : redact_for_capture("token=abcd1234 for alex@example.com")
 out: [REDACTED-SECRET] for [REDACTED:email]
 in : verdict_for_action("refuse"), verdict_for_action("minimise")
@@ -43,7 +45,7 @@ out: ('refused', 'auto')
 - `redact_for_capture(text)` · `DecisionsStore(path).remember/recall` · `OversightLevel`, `effective_level` · `injection_scan.scan_text` · `ScannedResponse`, `assert_scanned`
 - `seal_folder`, `unseal_folder`, `encrypt_record`, `decrypt_record`; `seal_binding.unlock/serve/replay/read_pairs`
 - `verdicts.verdict_for_action`, `verdict_for_oversight` — codomain read from `loomground_governance.vocabulary("verdicts")`
-- Host ports on `loomground_lock.host_deps` (`register(**hooks)` or `set_wiring_provider(fn)`): `tier_c_check_semantic`, `tier_c_requires_real_backend`, `llm_classify`, `models_for_role`, `key_root_dir`, `disable_lock_remediation`, `opaque_doc_token`, `workspace_memory`, `pending_erase_verify/apply`, `events_from_bytes`, `pair_from_event`, `read_served_versum_records`, `read_disk_versum_records`. Unwired ports degrade fail-safe. Full seam: [docs/seam.md](docs/seam.md).
+- Host ports on `loomground_lock.host_deps` (`register(**hooks)` or `set_wiring_provider(fn)`): `tier_c_check_semantic`, `tier_c_requires_real_backend`, `llm_classify`, `models_for_role`, `key_root_dir`, `disable_lock_remediation`, `opaque_doc_token`, `workspace_memory`, `pending_erase_verify/apply`, `events_from_bytes`, `pair_from_event`, `read_served_versum_records`, `read_disk_versum_records`. With nothing wired, Tier C runs the package's own default semantic tier (`tier_c_default_check`) at the strictness the host reaches with its default backend. A semantic check that cannot run — a crash, an unusable result, a promised backend missing, a wiring provider that raised — adds a high-severity `tier_c_unavailable` finding, which refuses. Full seam: [docs/seam.md](docs/seam.md).
 
 ## Family
 

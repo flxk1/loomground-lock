@@ -948,8 +948,9 @@ def tier_c_unavailable_finding(detail: str) -> Finding:
 
 def tier_c_context_terms_check(text: str, context: str = "") -> list[Finding]:
     """Deterministic Tier C: a confidential term supplied in ``context`` that
-    appears in ``text`` is a high-severity finding. This is the built-in part of
-    Tier C and runs whether or not a host wires a semantic backend."""
+    appears in ``text`` is a high-severity finding. Runs on every path, wired or
+    not, beside the semantic part (:mod:`loomground_lock.tier_c_default` or the
+    host's hook)."""
     if not text.strip():
         return []
     low = text.lower()
@@ -966,30 +967,55 @@ def tier_c_context_terms_check(text: str, context: str = "") -> list[Finding]:
     return []
 
 
+def _tier_c_required() -> bool:
+    """Whether the host has promised a real semantic backend, so a Tier C that
+    cannot run must fail closed. Consulted on every path, not only when a
+    semantic hook is wired. A predicate that raises counts as a promise."""
+    requires = host_deps.tier_c_requires_real_backend
+    if requires is None:
+        return False
+    try:
+        return bool(requires())
+    except Exception:  # noqa: BLE001
+        return True
+
+
 def _tier_c(text: str, context: str) -> list[Finding]:
-    """Tier C composition: built-in context-term check, then the host's semantic
-    hook. With no hook the semantic part is skipped; when the host says a real
-    backend is required and the hook fails, the failure is a refusal."""
+    """Tier C composition, in three parts:
+
+    1. ``tier_c_context_terms_check`` — confidential terms from ``context``.
+    2. The host's ``tier_c_check_semantic`` hook when wired and usable; else the
+       package's own :func:`tier_c_default.tier_c_default_check`, so the
+       semantic tier runs with nothing wired rather than being skipped.
+    3. When the semantic hook could not run and the host promised a real backend
+       — or its wiring provider raised, leaving what it wired unknown — a
+       high-severity ``tier_c_unavailable`` finding, which refuses.
+    """
     findings = tier_c_context_terms_check(text, context)
     host_deps.ensure_wired()
     semantic = host_deps.tier_c_check_semantic
-    requires = host_deps.tier_c_requires_real_backend
-    if semantic is None:
-        return findings
-    try:
-        extra = semantic(text, context=context)
-        if not isinstance(extra, list):
-            raise TypeError("semantic hook returned a non-list")
-        findings.extend(extra)
-    except Exception as e:  # noqa: BLE001
+    broken_wiring = host_deps.wiring_error()
+
+    unavailable: str | None = None
+    if broken_wiring is not None:
+        unavailable = f"host wiring provider raised ({broken_wiring})"
+    elif semantic is None:
+        unavailable = "no tier_c_check_semantic hook is wired"
+    else:
         try:
-            required = bool(requires()) if requires is not None else False
-        except Exception:
-            required = True
-        if required:
+            extra = semantic(text, context=context)
+            if not isinstance(extra, list):
+                raise TypeError("semantic hook returned a non-list")
+            findings.extend(extra)
+            return findings
+        except Exception as e:  # noqa: BLE001
             # class name only — never str(e) (may carry paths/scanned text).
-            findings.append(tier_c_unavailable_finding(
-                f"Tier-C layer crashed ({type(e).__name__})"))
+            unavailable = f"Tier-C layer crashed ({type(e).__name__})"
+
+    from .tier_c_default import tier_c_default_check
+    findings.extend(tier_c_default_check(text, context))
+    if broken_wiring is not None or _tier_c_required():
+        findings.append(tier_c_unavailable_finding(unavailable))
     return findings
 
 
@@ -1006,9 +1032,9 @@ def lock_text(
     """Pre-egress middleware for arbitrary text/document/triple content.
 
     Runs Tier B (regex) + Tier B+ (confusable-bypass) + Tier C (context terms,
-    then the host's semantic hook) + Tier M (moderation, only when
-    ``moderation_rules`` is supplied). Returns a TextDecision: allow as-is,
-    minimise (pattern spans redacted), or refuse.
+    then the host's semantic hook or the built-in default tier in its place) +
+    Tier M (moderation, only when ``moderation_rules`` is supplied). Returns a
+    TextDecision: allow as-is, minimise (pattern spans redacted), or refuse.
 
     ``mode``: STANDARD (high-severity refuses, medium minimises) | STRICT (any
     finding refuses) | PERMISSIVE / AUDIT_ONLY (findings recorded, never enforced).

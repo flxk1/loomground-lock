@@ -21,6 +21,7 @@ mostly host runtime; only the primitive moved.
 | `seal.py` | `loomground_lock.seal` | identity/log root from `loomground_workspace`; own `_file_lock`; pending-erase via hooks |
 | `seal_binding.py` | `loomground_lock.seal_binding` | served-store readers via hooks, JSON-line fallback |
 | — | `loomground_lock.verdicts` | new: lock actions and oversight levels → `.lg` verdict alphabet |
+| `lock/backends/mock.py` | `loomground_lock.tier_c_default` | the host's default backend, re-expressed as the package's built-in Tier C (port change a) |
 
 ## Preserved public names
 
@@ -56,25 +57,40 @@ lock.interactive.* lock.__main__.*`) remain the host's.
 
 ## The two port changes
 
-**(a) Tier C is a hook.** `core.lock_text` used to `from .tier_c import tier_c_check_semantic`.
-It now calls `host_deps.tier_c_check_semantic(text, context=)` when wired. Composition in
-`core._tier_c`:
+**(a) Tier C is a hook, over a default the package ships itself.** `core.lock_text` used to
+`from .tier_c import tier_c_check_semantic`. It now calls
+`host_deps.tier_c_check_semantic(text, context=)` when wired. Composition in `core._tier_c`:
 
 1. `core.tier_c_context_terms_check(text, context)` always runs: a confidential term from
    `context` found in `text` is a high-severity Tier-C finding. This is the deterministic
-   part of what the host's mock backend did, so an unwired package still refuses what the
-   host refused on confidential terms.
-2. If the hook is absent, semantic classification is skipped (degraded; the host's
-   keyword/model heuristics are the host's).
-3. If the hook raises or returns a non-list, the failure is a refusal
-   (`tier_c_unavailable`, high) when `host_deps.tier_c_requires_real_backend()` is True or
-   itself fails; when it returns False the failure is swallowed (the documented mock
-   default). Detail strings carry the exception class name only.
+   part of what the host's default backend did, so an unwired package still refuses what
+   the host refused on confidential terms.
+2. The host's hook runs when wired. Where it is absent, or it raises, or it hands back a
+   non-list, `tier_c_default.tier_c_default_check` runs in its place — the in-package
+   equivalent of the host's default backend (spec `mock`, what `AGENT_TOOL_LOCK_LLM_BACKEND`
+   resolves to unset): the same health / financial keyword sets and capitalised-pair name
+   heuristic, the same severities (health and financial high → refuse; a name pair medium →
+   minimise) and confidences. So the semantic tier exists with nothing wired, and a host
+   that wires a working backend replaces the default rather than un-skipping a gap.
+   Measured against the source at `bac579b` with its default backend, an unwired package
+   reaches the same verdict on `patient recovering well`, `Maria Schmidt owes a loan`,
+   `the salary is high`, `chemo starts Monday` (refuse) and `Maria Schmidt called`
+   (minimise) — `tests/test_tier_c_default.py` pins each.
+3. `host_deps.tier_c_requires_real_backend()` is consulted on every path where the hook did
+   not produce a result — **including the path where no hook is wired at all**. True (or a
+   predicate that itself raises) means the host promised a backend the lock cannot reach, so
+   a high-severity `tier_c_unavailable` finding is added and the decision refuses. Detail
+   strings carry the exception class name only.
+4. A wiring provider that raised (`host_deps.wiring_error()`) leaves what it wired unknown,
+   so Tier C is unavailable on that ground alone, whatever the `requires` predicate says.
 
-**(b) `ensure_wired()` imports nothing by name.** A host calls
+**(b) `ensure_wired()` imports nothing by name, and records its failures.** A host calls
 `host_deps.set_wiring_provider(fn)` (run once, lazily, on the first `ensure_wired()`) or
 `host_deps.register(**hooks)` directly. `register` rejects unknown hook names and
 non-callables; `clear()` drops everything (test isolation); `wired()` reports what is filled.
+`ensure_wired()` raises nothing whatever the provider does, but a provider that raises is
+recorded rather than swallowed: `wiring_error()` returns its exception class name, sticky
+until `set_wiring_provider()` or `clear()`, and Tier C fails closed while it is set.
 
 **Module-identity pitfall.** Hooks are attributes of the module object
 `loomground_lock.host_deps`. A host shim named e.g. `rvnd.lock.host_deps` must be the SAME
@@ -83,7 +99,7 @@ object — `sys.modules["rvnd.lock.host_deps"] = loomground_lock.host_deps` (or
 (`from loomground_lock.host_deps import *`) gets a snapshot: assignments land on the copy and
 the lock stays unwired, silently.
 
-### Hooks (all `None` until wired; all degrade fail-safe)
+### Hooks (all `None` until wired; each call site's "absent" behaviour is below)
 
 Carried over from the source declaration: `models_for_role llm_classify key_root_dir
 record_decision list_connectors l0_load_policy l0_capture_llm l0_capture_web list_models
@@ -95,8 +111,8 @@ Added by the extraction:
 
 | Hook | Signature | Absent → |
 |---|---|---|
-| `tier_c_check_semantic` | `(text, context="") -> list[Finding]` | context-term check only |
-| `tier_c_requires_real_backend` | `() -> bool` | False |
+| `tier_c_check_semantic` | `(text, context="") -> list[Finding]` | context-term check + the built-in default semantic tier |
+| `tier_c_requires_real_backend` | `() -> bool` | False. Wired and True with no `tier_c_check_semantic` → `tier_c_unavailable`, high |
 | `disable_lock_remediation` | `() -> dict` | `{"acknowledgement_required": True, "disclaimer_required": True}` (the source hard-coded a host CLI string, tool name and disclaimer URL) |
 | `opaque_doc_token` | `(source, folder_path) -> str` | `<DOC_unknown>` (source imported the host's salted token) |
 | `workspace_memory` | `(folder_context, log_root=, actor=) -> memory` with `all_pairs()`, `remember(pair, channel=, source_hash=)` | `reclassify_all_pairs` raises `RuntimeError` unless `memory=` is passed |
@@ -120,7 +136,7 @@ Added by the extraction:
 | `seal._REC_MAGIC` | `b"RVEC1"` | per-record envelope magic (on-disk format, kept byte-identical) |
 | `seal._MAGIC` | `"workspace-seal"` | whole-store envelope magic |
 | `scanned_response.ScannedResponse.to_mcp_payload` | alias of `to_payload` | the one host-protocol name kept in `src/`, for existing callers |
-| — | `AGENT_TOOL_LOCK_LLM_BACKEND` | read by the host's `tier_c.py` (stays); unreached here |
+| — | `AGENT_TOOL_LOCK_LLM_BACKEND` | read by the host's `tier_c.py` (stays); unreached here. Its unset default, `mock`, is what `loomground_lock.tier_c_default` reproduces |
 
 ## Other behaviour notes
 
@@ -150,7 +166,7 @@ Added by the extraction:
 | `lock/l0_bridge.py`, `lock/l0_mcp_client.py` | in-process/cross-process policy + capture bridge to the host |
 | `lock/obsidian_kg.py` | host knowledge-vault adapter |
 | `lock/onboarding/` | wizard + config for local models |
-| `lock/backends/` | local-LLM backends (llama_cpp, onnx_genai, mock) |
+| `lock/backends/` | local-LLM backends (llama_cpp, onnx_genai); the `mock` default is re-expressed here as `tier_c_default` |
 | `lock/tier_c.py` | backend dispatcher over `backends/` + env spec; reaches the package through the `tier_c_check_semantic` hook |
 | `lock/interactive.py` | CLI review loop |
 | `lock/broker_probe.py`, `lock/track_broker.py` | broker liveness + track binding runtime |

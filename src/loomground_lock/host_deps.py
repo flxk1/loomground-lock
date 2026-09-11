@@ -4,12 +4,19 @@
 
 Every hook is a module attribute, ``None`` until a host fills it. The lock
 reaches a host only through these attributes, so a host that wires nothing
-gets the documented degraded behaviour at each call site (fail-safe, never
-fail-open). Two ways to wire:
+gets the documented degraded behaviour at each call site — for Tier C, the
+package's own built-in default tier (:mod:`loomground_lock.tier_c_default`).
+Two ways to wire:
 
 - ``register(**hooks)`` assigns hooks directly;
 - ``set_wiring_provider(fn)`` defers to ``fn`` on the first
   ``ensure_wired()`` call, which the call sites make lazily.
+
+``ensure_wired()`` is total — it raises nothing, whatever the provider does —
+but a provider that raises is RECORDED, not swallowed: ``wiring_error()``
+reports the exception class name, and a call site whose hooks may be missing
+because of it treats its tier as unavailable and fails closed. The record is
+sticky; ``set_wiring_provider()`` or ``clear()`` resets it.
 
 Identity matters: hooks live on THIS module object. A host shim that
 re-exports the lock under another name must alias the same module object
@@ -36,11 +43,12 @@ verify_agent_identity: Optional[Callable[..., Any]] = None
 record_audit_drop: Optional[Callable[..., Any]] = None
 
 # Tier C semantic check: ``(text, context="") -> list[Finding]``. Absent → the
-# built-in deterministic context-term check runs and semantic classification
-# is skipped; see ``core.lock_text``.
+# built-in context-term check and the built-in default semantic tier run in its
+# place; see ``core._tier_c``.
 tier_c_check_semantic: Optional[Callable[..., Any]] = None
 # ``() -> bool``: True when the host has a real semantic backend configured, so a
-# failing Tier C must fail closed. Absent → False (nothing was promised).
+# Tier C that cannot run must fail closed — consulted whether or not
+# ``tier_c_check_semantic`` is wired. Absent → False (nothing was promised).
 tier_c_requires_real_backend: Optional[Callable[[], bool]] = None
 # ``() -> dict``: payload for the ``disable_lock`` remediation action (how the
 # host lets a person opt out, and where its disclaimer lives).
@@ -68,13 +76,16 @@ HOOKS: tuple[str, ...] = tuple(
 
 _provider: Optional[Callable[[], Any]] = None
 _wired = False
+_wiring_error: Optional[str] = None
 
 
 def set_wiring_provider(provider: Optional[Callable[[], Any]]) -> None:
-    """Install the callable that fills the hooks on first use."""
-    global _provider, _wired
+    """Install the callable that fills the hooks on first use. Resets a
+    previously recorded wiring failure."""
+    global _provider, _wired, _wiring_error
     _provider = provider
     _wired = False
+    _wiring_error = None
 
 
 def register(**hooks: Optional[Callable[..., Any]]) -> None:
@@ -89,16 +100,20 @@ def register(**hooks: Optional[Callable[..., Any]]) -> None:
 
 
 def clear() -> None:
-    """Drop every hook and the provider (test isolation)."""
-    global _provider, _wired
+    """Drop every hook, the provider and any recorded wiring failure."""
+    global _provider, _wired, _wiring_error
     for name in HOOKS:
         globals()[name] = None
     _provider = None
     _wired = False
+    _wiring_error = None
 
 
 def ensure_wired() -> None:
-    global _wired
+    """Run the provider once. Total: a provider that raises is recorded in
+    ``wiring_error()``, leaving the hooks it meant to fill unknown, and call
+    sites fail closed on that."""
+    global _wired, _wiring_error
     if _wired:
         return
     _wired = True
@@ -106,10 +121,17 @@ def ensure_wired() -> None:
         return
     try:
         _provider()
-    except Exception:
-        pass
+    except Exception as e:  # noqa: BLE001
+        # class name only — a provider's message can carry paths or credentials.
+        _wiring_error = type(e).__name__
+
+
+def wiring_error() -> Optional[str]:
+    """The exception class name of a wiring provider that raised, else ``None``.
+    Sticky until ``set_wiring_provider()`` or ``clear()``."""
+    return _wiring_error
 
 
 def wired() -> dict[str, bool]:
-    """Which hooks a host has filled — for diagnostics, never for gating."""
+    """Which hooks a host has filled — for diagnostics, not for gating."""
     return {name: globals()[name] is not None for name in HOOKS}
