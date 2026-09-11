@@ -2,6 +2,18 @@
 <!-- Copyright 2026 flxk1 -->
 # Changelog
 
+## [0.2.0](https://github.com/flxk1/loomground-lock/compare/loomground-lock-v0.1.0...loomground-lock-v0.2.0) (2026-09-11)
+
+
+### Features
+
+* extract the lock and seal primitive from the host engine ([b9dc09f](https://github.com/flxk1/loomground-lock/commit/b9dc09f8793720f4f94c3e3917a119d6acb7eec7))
+
+
+### Bug Fixes
+
+* fail closed when Tier C cannot run, not open ([441ad41](https://github.com/flxk1/loomground-lock/commit/441ad4106f2d36d8af5a76c7f7abc80304636e9f))
+
 ## 0.1.0
 
 * Extracted from the RVND engine at commit `bac579b` (`flxk1/RVND`, `server/src/rvnd/`): `lock/core.py`, `lock/host_deps.py`, `lock/decisions.py`, `lock/oversight.py`, `lock/injection_scan.py`, `lock/scanned_response.py`, `lock/tier_m.py`, `lock/credential_resolver.py`, `lock_classify.py`, `seal.py`, `seal_binding.py` → `loomground_lock.{core,host_deps,decisions,oversight,injection_scan,scanned_response,tier_m,credential_resolver,lock_classify,seal,seal_binding}`. Tests ported from `server/tests/test_lock_text.py`, `test_tier_b_extended.py`, `test_lock_core_ingress_invariant.py`, `test_capability_token_signatures.py`, `test_lock_hardening_067.py`, `test_tier_m_moderation.py`, `test_lock_classify_and_threshold_2026_05_22.py`, `test_seal*.py`, `test_scanned_response.py`, `test_per_track_credential.py`, `test_decisions_and_gate.py`.
