@@ -1,0 +1,47 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 flxk1
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "loomground-lock"
+description = "Egress and ingress locks with capability tokens, and at-rest sealing of a folder's memory."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "Apache-2.0"
+license-files = ["LICENSES/Apache-2.0.txt", "LICENSES/CC-BY-4.0.txt"]
+authors = [{ name = "Loomground Contributors" }]
+# governance: the verdict vocabulary the lock's decisions are mapped onto (read at
+# runtime). workspace: folder identity + log root the seal hangs its blob off.
+# cryptography: AES-GCM sealing and Ed25519 capability-token verification.
+dependencies = [
+    "loomground-governance>=0.11,<0.12",
+    "loomground-workspace>=0.1,<0.2",
+    "cryptography>=41.0",
+]
+dynamic = ["version"]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==9.1.1",
+]
+
+[project.urls]
+Homepage = "https://github.com/flxk1/loomground-lock"
+Repository = "https://github.com/flxk1/loomground-lock"
+Issues = "https://github.com/flxk1/loomground-lock/issues"
+
+[tool.setuptools.dynamic]
+version = { attr = "loomground_lock._version.__version__" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["loomground_lock*"]
+
+[tool.setuptools.package-data]
+loomground_lock = ["py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

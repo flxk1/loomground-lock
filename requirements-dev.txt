@@ -1,0 +1,3 @@
+# Git-pinned first-party planes at their release tags (no index yet). Install BEFORE `pip install .` so the ranges resolve.
+loomground-governance @ git+https://github.com/flxk1/loomground-governance@cf09ad8336c0ef47e700952896314472129fa4c7
+loomground-workspace @ git+https://github.com/flxk1/loomground-workspace@e6e5e7dae8dc11e089a11dc15f3b519d2e4750ad
