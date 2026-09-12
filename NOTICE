@@ -9,12 +9,8 @@ International license (see LICENSES/CC-BY-4.0.txt).
 The Python implementation, tests, and repository tooling are licensed under the
 Apache License, Version 2.0 (see LICENSES/Apache-2.0.txt).
 
-The implementation was extracted from the RVND engine (repository flxk1/RVND,
-commit bac579b, files server/src/rvnd/lock/{core,host_deps,decisions,oversight,
-injection_scan,scanned_response,tier_m,credential_resolver}.py,
-lock_classify.py, seal.py, seal_binding.py), written by the same author and
-relicensed from AGPL-3.0-only to Apache-2.0 for this package, following the
-loomground-workspace extraction.
+The implementation was relicensed by its sole rights holder from
+AGPL-3.0-only to Apache-2.0 for this public package.
 
 Authorship and AI assistance: all code and documentation are authored by the
 project's human author(s), who hold the copyright. Generative AI tools were used

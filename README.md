@@ -49,11 +49,11 @@ out: ('refused', 'auto')
 
 ## Family
 
-Runtime controls. Consumes `loomground-governance` (verdict vocabulary) and `loomground-workspace` (folder identity, log root). Consumed by hosts, e.g. RVND, through the ports above; optional for every consumer.
+Runtime controls. Consumes `loomground-governance` (verdict vocabulary) and `loomground-workspace` (folder identity, log root). Hosts consume it through the ports above; it is optional for every consumer.
 
 ## Status
 
-0.1.0 · extracted from RVND `bac579b` · Python >=3.10 · governance 0.11 · workspace 0.1
+0.2.0 · Python >=3.10 · governance 0.11 · workspace 0.1
 
 ## License
 

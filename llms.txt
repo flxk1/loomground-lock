@@ -29,6 +29,6 @@ seal_folder("~/Workspaces/alpha", passphrase="…")           # ciphertext at re
 - Host ports on `loomground_lock.host_deps` (`register(**hooks)` or `set_wiring_provider(fn)`): `tier_c_check_semantic`, `tier_c_requires_real_backend`, `llm_classify`, `models_for_role`, `key_root_dir`, `disable_lock_remediation`, `opaque_doc_token`, `workspace_memory`, `pending_erase_verify/apply`, `events_from_bytes`, `pair_from_event`, `read_served_versum_records`, `read_disk_versum_records`. With nothing wired, Tier C runs the package's own default semantic tier (`tier_c_default_check`) at the strictness the host reaches with its default backend. A semantic check that cannot run — a crash, an unusable result, a promised backend missing, a wiring provider that raised — adds a high-severity `tier_c_unavailable` finding, which refuses. Full seam: [docs/seam.md](docs/seam.md).
 
 ## Family
-Runtime controls. Consumes `loomground-governance` (verdict vocabulary) and `loomground-workspace` (folder identity, log root). Consumed by hosts, e.g. RVND, through the ports above; optional for every consumer.
+Runtime controls. Consumes `loomground-governance` (verdict vocabulary) and `loomground-workspace` (folder identity, log root). Hosts consume it through the ports above; it is optional for every consumer.
 
 Language: loomground — guide https://github.com/flxk1/loomground/blob/main/llms.txt (the .lg language an agent reads, emits, validates); catalogue https://github.com/flxk1/loomground/blob/main/CATALOGUE.json
