@@ -12,9 +12,6 @@ Apache License, Version 2.0 (see LICENSES/Apache-2.0.txt).
 The implementation was relicensed by its sole rights holder from
 AGPL-3.0-only to Apache-2.0 for this public package.
 
-Authorship and AI assistance: all code and documentation are authored by the
-project's human author(s), who hold the copyright. Generative AI tools were used
-to assist with development. An AI system is a tool, not an author or a
-contributor: it holds no copyright and makes no copyright claim, and AI systems
-cannot hold copyright. This assistance is acknowledged here, not recorded as
-authorship.
+How this is made: The code and documentation are written with Loomground
+agents running on Claude (Anthropic). The maintainer reads and corrects all
+of it.
