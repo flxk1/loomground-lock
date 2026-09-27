@@ -7,7 +7,7 @@ Secrets and personal data leave with every tool call. Egress and ingress locks w
 
 ## Install
 ```
-pip install -r requirements-dev.txt && pip install loomground-lock
+pip install -r requirements-dev.txt && pip install .
 ```
 
 ## Usage

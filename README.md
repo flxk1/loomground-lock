@@ -11,7 +11,7 @@ Secrets and personal data leave with every tool call. Egress and ingress locks w
 ## Install
 
 ```
-pip install -r requirements-dev.txt && pip install loomground-lock
+pip install -r requirements-dev.txt && pip install .
 ```
 
 ## Usage
@@ -54,6 +54,10 @@ Runtime controls. Consumes `loomground-governance` (verdict vocabulary) and `loo
 ## Status
 
 0.2.0 · Python >=3.10 · governance 0.11 · workspace 0.1
+
+## How this is made
+
+The code and documentation are written with Loomground agents. The maintainer reads and corrects all of it.
 
 ## License
 
