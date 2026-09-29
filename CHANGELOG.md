@@ -2,6 +2,20 @@
 <!-- Copyright 2026 flxk1 -->
 # Changelog
 
+## [0.2.1](https://github.com/flxk1/loomground-lock/compare/loomground-lock-v0.2.0...loomground-lock-v0.2.1) (2026-09-29)
+
+
+### Bug Fixes
+
+* **release:** extra-files marker, version 0.2.0 matches the tag ([a6ec38b](https://github.com/flxk1/loomground-lock/commit/a6ec38b490c112a940a4d91626854e6faf7011c1))
+
+
+### Documentation
+
+* correct stale claims; add How this is made ([a082d66](https://github.com/flxk1/loomground-lock/commit/a082d6643f212d48a449f16737267df4d9ddc669))
+* How this is made names no model vendor ([7012fa2](https://github.com/flxk1/loomground-lock/commit/7012fa289cc2493f16fd0f8b37acd3d937bc30ce))
+* install from checkout; add How this is made; align NOTICE ([3126407](https://github.com/flxk1/loomground-lock/commit/31264077c58e9ca2d84ef18a9b5ec4f55a9f8851))
+
 ## [0.2.0](https://github.com/flxk1/loomground-lock/compare/loomground-lock-v0.1.0...loomground-lock-v0.2.0) (2026-09-11)
 
 
